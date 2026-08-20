@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hautpflege</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#A24E4E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hautpflege">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root {
+    --paper: #EFECE6;
+    --paper-card: #FAF8F4;
+    --ink: #2B2622;
+    --ink-soft: #7C7168;
+    --ink-faint: #A79C90;
+    --accent: #A24E4E;
+    --accent-dim: #E6C9C4;
+    --accent-pale: #F3E4E1;
+    --accent2: #6B7B6E;
+    --accent2-pale: #E3E9E2;
+    --line: #DDD5CB;
+    --danger: #9C4B3F;
+    --warn-bg: #FBF1DE;
+    --warn-text: #8A6215;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: 'Lora', Georgia, serif; min-height: 100vh; }
+  .app { display: flex; min-height: 100vh; max-width: 1120px; margin: 0 auto; }
+
+  /* Login */
+  .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 100vh; text-align: center; padding: 20px; }
+  .login-screen h1 { font-family: 'Fraunces', serif; font-size: 34px; margin: 0 0 8px; }
+  .login-screen p { font-family: 'Inter', sans-serif; color: var(--ink-soft); margin: 0 0 28px; max-width: 380px; }
+  .google-btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; background: var(--accent); color: var(--paper-card); border: none; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .google-btn:hover { background: #8a3f3f; }
+  .config-warning { max-width: 480px; margin-top: 24px; padding: 16px 18px; background: var(--paper-card); border: 1px solid var(--line); border-radius: 8px; text-align: left; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+  .config-warning code { background: var(--accent-pale); padding: 1px 5px; border-radius: 3px; }
+
+  /* Sidebar / nav */
+  .sidebar { width: 220px; flex-shrink: 0; padding: 32px 16px 32px 28px; border-right: 1px solid var(--line); position: sticky; top: 0; align-self: flex-start; max-height: 100vh; overflow-y: auto; }
+  .brand { font-family: 'Fraunces', serif; font-weight: 600; font-size: 20px; margin: 0 0 2px 0; }
+  .brand-sub { font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 6px 0; }
+  .account-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; gap: 8px; }
+  .account-email { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+  .logout-btn { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--accent); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
+
+  .nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; margin-bottom: 4px; border: none; background: transparent; border-radius: 6px; cursor: pointer; text-align: left; font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--ink-soft); }
+  .nav-btn:hover { background: var(--accent-pale); color: var(--ink); }
+  .nav-btn.active { background: var(--accent-dim); color: var(--ink); font-weight: 600; }
+
+  /* Main */
+  .main { flex: 1; min-width: 0; padding: 44px 52px 70px; }
+  .page-title { font-family: 'Fraunces', serif; font-weight: 600; font-size: 32px; margin: 0 0 4px; }
+  .page-sub { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--ink-soft); margin: 0 0 28px; max-width: 560px; line-height: 1.6; }
+  .underline-svg { display: block; width: 150px; height: 9px; margin: 8px 0 26px 0; }
+
+  .card { background: var(--paper-card); border: 1px solid var(--line); border-radius: 8px; padding: 20px 22px; margin-bottom: 16px; }
+  .card h3 { font-family: 'Fraunces', serif; font-size: 17px; margin: 0 0 10px; }
+
+  label.field-label { display: block; font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-soft); margin: 12px 0 5px; }
+  label.field-label:first-child { margin-top: 0; }
+  input[type=text], select, textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper);
+    font-family: 'Lora', Georgia, serif; font-size: 14.5px; color: var(--ink); outline: none;
+  }
+  input[type=text]:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  .checkbox-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip-check { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-soft); background: var(--paper); user-select: none; }
+  .chip-check input { display: none; }
+  .chip-check.checked { background: var(--accent-dim); border-color: var(--accent-dim); color: var(--ink); font-weight: 500; }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--accent); color: var(--paper-card); border: none; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer; }
+  .btn:hover { background: #8a3f3f; }
+  .btn:disabled { background: var(--ink-faint); cursor: default; }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn-ghost:hover { background: var(--accent-pale); color: var(--ink); }
+  .btn-sm { padding: 6px 13px; font-size: 12px; }
+  .btn-danger-text { background: none; border: none; color: var(--danger); font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
+  .status { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-faint); margin-top: 10px; min-height: 16px; }
+  .status.saved { color: var(--accent2); }
+  .status.error { color: var(--danger); }
+
+  .product-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+  .product-row:last-child { border-bottom: none; }
+  .product-name { font-family: 'Fraunces', serif; font-size: 15.5px; font-weight: 500; }
+  .product-cat { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .05em; margin-left: 8px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .tag { font-family: 'Inter', sans-serif; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--accent2-pale); color: #4a564c; }
+  .tag.unknown { background: var(--paper); color: var(--ink-faint); border: 1px dashed var(--line); }
+  .group-heading { font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); margin: 22px 0 6px; }
+  .group-heading:first-child { margin-top: 0; }
+  .empty-note { font-family: 'Inter', sans-serif; color: var(--ink-faint); font-size: 13.5px; padding: 6px 0 0; }
+
+  .concern-select-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .plan-block { margin-top: 18px; }
+  .plan-step { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .plan-step:last-child { border-bottom: none; }
+  .plan-step-num { font-family: 'Fraunces', serif; font-weight: 600; color: var(--accent); width: 20px; flex-shrink: 0; }
+  .plan-step-body b { font-family: 'Lora', serif; }
+  .plan-step-body .why { display: block; font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .missing-box { margin-top: 16px; padding: 13px 16px; background: var(--warn-bg); border-radius: 6px; }
+  .missing-box h4 { margin: 0 0 6px; font-family: 'Inter', sans-serif; font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--warn-text); }
+  .missing-box p { margin: 0; font-family: 'Inter', sans-serif; font-size: 13px; color: #6b4d10; line-height: 1.6; }
+
+  .warning-box { margin-top: 12px; padding: 11px 15px; background: var(--warn-bg); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--warn-text); line-height: 1.6; }
+
+  .lex-search { margin-bottom: 18px; }
+  .lex-item { padding: 15px 0; border-bottom: 1px solid var(--line); }
+  .lex-item:last-child { border-bottom: none; }
+  .lex-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; }
+  .lex-time { font-family: 'Inter', sans-serif; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-faint); margin-left: 8px; }
+  .lex-purpose { font-family: 'Lora', serif; font-size: 14.5px; margin: 6px 0 8px; line-height: 1.55; }
+
+  .log-day { margin-bottom: 18px; }
+  .log-day-date { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500; margin: 0 0 6px; }
+  .log-time-row { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-soft); margin-bottom: 3px; }
+  .log-time-row b { color: var(--ink); font-weight: 600; }
+
+  .finished-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-soft); }
+  .finished-row:last-child { border-bottom: none; }
+
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal-month-label { font-family: 'Fraunces', serif; font-size: 15.5px; font-weight: 500; }
+  .cal-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+  .cal-table th { font-family: 'Inter', sans-serif; font-size: 10.5px; color: var(--ink-faint); font-weight: 500; padding: 4px 0; }
+  .cal-table td { text-align: center; padding: 2px; }
+  .cal-day { width: 34px; height: 34px; border: none; border-radius: 50%; background: transparent; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); cursor: pointer; position: relative; }
+  .cal-day:hover { background: var(--accent-pale); }
+  .cal-day.has-log::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+  .cal-day.is-today { font-weight: 700; border: 1px solid var(--accent-dim); }
+  .cal-day.is-selected { background: var(--accent); color: var(--paper-card); }
+  .cal-day.is-selected::after { background: var(--paper-card); }
+
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: grid; grid-template-columns: 120px 1fr 32px; align-items: center; gap: 10px; }
+  .bar-label { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { background: var(--paper); border-radius: 4px; height: 10px; overflow: hidden; }
+  .bar-fill { background: var(--accent); height: 100%; border-radius: 4px; }
+  .bar-count { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-faint); text-align: right; }
+
+  .info-banner { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-faint); line-height: 1.6; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); }
+
+  .loading-state { font-family: 'Inter', sans-serif; font-size: 14px; color: var(--ink-soft); padding: 40px 0; }
+
+  @media (max-width: 760px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--line); padding: 18px 20px; position: static; max-height: none; }
+    .nav-list { display: flex; gap: 6px; overflow-x: auto; }
+    .nav-btn { white-space: nowrap; }
+    .main { padding: 26px 18px 50px; }
+    .page-title { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="root"><div class="login-screen"><div class="loading-state">Lade …</div></div></div>
+
+<script>
+/* ============================================================
+   FIREBASE-KONFIGURATION — dieselbe wie im Tagebuch-Projekt
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAWunZXyCgmwfueuORmexMEOdXMe7dHwMM",
+  authDomain: "tagebuch-6fb5f.firebaseapp.com",
+  projectId: "tagebuch-6fb5f",
+  storageBucket: "tagebuch-6fb5f.firebasestorage.app",
+  messagingSenderId: "199355621847",
+  appId: "1:199355621847:web:61178012939f6aa54beb92"
+};
+/* ============================================================ */
+
+const CONFIG_IS_PLACEHOLDER = firebaseConfig.apiKey === "DEIN_API_KEY";
+
+/* ---------------- Wissensbasis ---------------- */
+
+const CATEGORIES = [
+  { key: 'reinigung', label: 'Reinigung', order: 1 },
+  { key: 'toner', label: 'Toner', order: 2 },
+  { key: 'serum', label: 'Serum', order: 3 },
+  { key: 'augencreme', label: 'Augencreme', order: 4 },
+  { key: 'creme', label: 'Creme', order: 5 },
+  { key: 'oel', label: 'Gesichtsöl', order: 6 },
+  { key: 'peeling', label: 'Peeling', order: 3 },
+  { key: 'maske', label: 'Maske', order: 3 },
+  { key: 'spf', label: 'Sonnenschutz', order: 7 }
+];
+function categoryLabel(key) { const c = CATEGORIES.find(c => c.key === key); return c ? c.label : key; }
+function categoryOrder(key) { const c = CATEGORIES.find(c => c.key === key); return c ? c.order : 5; }
+
+const CONCERNS = [
+  { key: 'unreinheiten', label: 'Unreinheiten / Pickel' },
+  { key: 'trockenheit', label: 'Trockenheit' },
+  { key: 'roetungen', label: 'Rötungen / Reizung' },
+  { key: 'falten', label: 'Falten / Anti-Aging' },
+  { key: 'pigmentflecken', label: 'Pigmentflecken' },
+  { key: 'grossporen', label: 'Große Poren' }
+];
+
+// Reihenfolge-Gewicht innerhalb der Kategorie (leicht -> reichhaltig)
+const INGREDIENTS = {
+  'niacinamid': { name: 'Niacinamid', purpose: 'Verfeinert das Hautbild, reguliert Talg und beruhigt Rötungen. Vielseitig einsetzbar, meist gut verträglich.', concerns: ['unreinheiten','roetungen','grossporen'], time: 'both', weight: 3, conflicts: [] },
+  'vitamin-c': { name: 'Vitamin C (Ascorbinsäure)', purpose: 'Antioxidans, hellt Pigmentflecken auf und schützt zusätzlich vor freien Radikalen. Wirkt am besten morgens unter Sonnenschutz.', concerns: ['pigmentflecken','falten'], time: 'morning', weight: 3, conflicts: ['retinol','aha','bha'] },
+  'retinol': { name: 'Retinol / Retinoide', purpose: 'Fördert Zellerneuerung, wirkt gegen Falten, Unreinheiten und Pigmentflecken. Braucht Eingewöhnung, nur abends verwenden.', concerns: ['falten','unreinheiten','pigmentflecken'], time: 'evening', weight: 4, conflicts: ['vitamin-c','aha','bha','benzoylperoxid'] },
+  'hyaluronsaeure': { name: 'Hyaluronsäure', purpose: 'Bindet Feuchtigkeit in der Haut, macht sie praller und geschmeidiger. Passt in fast jede Routine.', concerns: ['trockenheit','falten'], time: 'both', weight: 2, conflicts: [] },
+  'aha': { name: 'AHA (Glykol-, Milchsäure)', purpose: 'Chemisches Peeling, glättet die Hautoberfläche und hilft gegen Pigmentflecken. Nur abends, mit Sonnenschutz am Folgetag.', concerns: ['pigmentflecken','unreinheiten','falten'], time: 'evening', weight: 3, conflicts: ['retinol','vitamin-c'] },
+  'bha': { name: 'BHA (Salicylsäure)', purpose: 'Dringt tief in die Poren ein, löst Talg und Mitesser. Gut bei unreiner, öliger Haut.', concerns: ['unreinheiten','grossporen'], time: 'evening', weight: 3, conflicts: ['retinol','vitamin-c'] },
+  'ceramide': { name: 'Ceramide', purpose: 'Stärkt die Hautbarriere, hält Feuchtigkeit in der Haut und schützt vor Reizungen.', concerns: ['trockenheit','roetungen'], time: 'both', weight: 4, conflicts: [] },
+  'panthenol': { name: 'Panthenol (Pro-Vitamin B5)', purpose: 'Beruhigt, unterstützt die Regeneration und lindert Spannungsgefühl.', concerns: ['roetungen','trockenheit'], time: 'both', weight: 2, conflicts: [] },
+  'squalan': { name: 'Squalan', purpose: 'Pflegendes Öl-ähnliches Feuchtigkeitsmittel, zieht ohne zu beschweren ein.', concerns: ['trockenheit'], time: 'both', weight: 4, conflicts: [] },
+  'centella': { name: 'Centella Asiatica (Cica)', purpose: 'Beruhigt gereizte Haut und unterstützt die Regeneration der Hautbarriere.', concerns: ['roetungen','unreinheiten'], time: 'both', weight: 3, conflicts: [] },
+  'zink': { name: 'Zink', purpose: 'Wirkt talgregulierend und leicht entzündungshemmend, gut bei unreiner Haut.', concerns: ['unreinheiten'], time: 'both', weight: 3, conflicts: [] },
+  'benzoylperoxid': { name: 'Benzoylperoxid', purpose: 'Bekämpft Akne-Bakterien gezielt. Kann austrocknen, langsam einschleichen.', concerns: ['unreinheiten'], time: 'evening', weight: 3, conflicts: ['retinol'] },
+  'peptide': { name: 'Peptide', purpose: 'Unterstützen die Kollagenbildung und wirken so vorbeugend gegen Falten.', concerns: ['falten'], time: 'both', weight: 4, conflicts: [] },
+  'azelainsaeure': { name: 'Azelainsäure', purpose: 'Vielseitig gegen Rötungen, Unreinheiten und Pigmentflecken, meist sehr gut verträglich.', concerns: ['roetungen','unreinheiten','pigmentflecken'], time: 'both', weight: 3, conflicts: [] },
+  'spf': { name: 'Lichtschutzfaktor (SPF)', purpose: 'Der wichtigste Schritt gegen Falten und Pigmentflecken überhaupt — täglich morgens als letzter Schritt.', concerns: ['falten','pigmentflecken'], time: 'morning', weight: 9, conflicts: [] }
+};
+let INGREDIENT_KEYS = Object.keys(INGREDIENTS);
+
+function ingredientWeight(key) { return INGREDIENTS[key] ? INGREDIENTS[key].weight : 5; }
+
+function slugify(name) {
+  const base = name.toLowerCase().trim()
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  let key = base || 'wirkstoff';
+  let i = 2;
+  while (INGREDIENTS[key]) { key = base + '-' + i; i++; }
+  return key;
+}
+
+/* ---------------- State ---------------- */
+let currentUser = null;
+let db = null;
+let products = {};   // { id: { id, name, category, ingredients:[keys], customIngredients:[strings], status, addedAt, finishedAt } }
+let logs = {};        // { 'YYYY-MM-DD': { morning: [productId], evening: [productId] } }
+let currentView = 'schrank';
+let lexFilter = '';
+let selectedConcern = CONCERNS[0].key;
+let pendingIngredientSelection = [];
+let customLexicon = {}; // { key: {name, purpose, concerns, time, conflicts, custom:true} }
+let pendingNewIngredientConcerns = [];
+
+function todayISO() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+function pad(n) { return String(n).padStart(2, '0'); }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
+function formatDateShort(iso) {
+  const [y,m,d] = iso.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const weekdayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const monthNames = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  return weekdayNames[dt.getDay()] + ', ' + dt.getDate() + '. ' + monthNames[dt.getMonth()];
+}
+
+function activeProducts() { return Object.values(products).filter(p => p.status === 'active'); }
+function finishedProducts() { return Object.values(products).filter(p => p.status === 'finished').sort((a,b) => (b.finishedAt||'').localeCompare(a.finishedAt||'')); }
+function productIngredientKeys(p) { return (p.ingredients || []).filter(k => INGREDIENTS[k]); }
+
+/* ---------------- Firestore ---------------- */
+async function loadData() {
+  const doc = await db.collection('skincare').doc(currentUser.uid).get();
+  const data = doc.exists ? doc.data() : {};
+  products = data.products ? JSON.parse(data.products) : {};
+  logs = data.logs ? JSON.parse(data.logs) : {};
+  customLexicon = data.customLexicon ? JSON.parse(data.customLexicon) : {};
+  Object.keys(customLexicon).forEach(key => { INGREDIENTS[key] = customLexicon[key]; });
+  INGREDIENT_KEYS = Object.keys(INGREDIENTS);
+}
+async function persistData() {
+  await db.collection('skincare').doc(currentUser.uid).set({
+    products: JSON.stringify(products),
+    logs: JSON.stringify(logs),
+    customLexicon: JSON.stringify(customLexicon)
+  });
+}
+
+/* ---------------- Shell / nav ---------------- */
+function renderLogin() {
+  const root = document.getElementById('root');
+  if (CONFIG_IS_PLACEHOLDER) {
+    root.innerHTML = `<div class="login-screen"><h1>Hautpflege</h1><p>Firebase-Konfiguration fehlt noch im Code.</p>
+      <div class="config-warning">Trag dein <code>firebaseConfig</code>-Objekt oben im Script ein.</div></div>`;
+    return;
+  }
+  root.innerHTML = `
+    <div class="login-screen">
+      <h1>Hautpflege</h1>
+      <p>Melde dich mit deinem Google-Konto an, um deinen Pflegeschrank auf jedem Gerät zu sehen.</p>
+      <button class="google-btn" id="login-btn">Mit Google anmelden</button>
+    </div>`;
+  document.getElementById('login-btn').addEventListener('click', () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider).catch(err => alert('Anmeldung fehlgeschlagen: ' + err.message));
+  });
+}
+
+const NAV_ITEMS = [
+  { key: 'schrank', label: '🧴 Schrank' },
+  { key: 'heute', label: '☀️ Heute' },
+  { key: 'anliegen', label: '🎯 Hautanliegen' },
+  { key: 'lexikon', label: '📖 Wirkstoff-Lexikon' },
+  { key: 'verlauf', label: '🗓️ Verlauf' }
+];
+
+function renderShell() {
+  const root = document.getElementById('root');
+  root.innerHTML = `
+    <div class="app">
+      <aside class="sidebar">
+        <p class="brand">Hautpflege</p>
+        <p class="brand-sub">Dein Pflegeschrank</p>
+        <div class="account-row">
+          <span class="account-email" title="${escapeHtml(currentUser.email||'')}">${escapeHtml(currentUser.email || currentUser.displayName || '')}</span>
+          <button class="logout-btn" id="logout-btn" type="button">Abmelden</button>
+        </div>
+        <div class="nav-list">
+          ${NAV_ITEMS.map(item => `<button class="nav-btn${item.key===currentView?' active':''}" data-view="${item.key}" type="button">${item.label}</button>`).join('')}
+        </div>
+      </aside>
+      <main class="main" id="main-content"><div class="loading-state">Einen Moment …</div></main>
+    </div>`;
+  document.getElementById('logout-btn').addEventListener('click', () => firebase.auth().signOut());
+  root.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => { currentView = btn.getAttribute('data-view'); renderMain(); });
+  });
+}
+
+function renderMain() {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-view') === currentView));
+  const main = document.getElementById('main-content');
+  if (currentView === 'schrank') main.innerHTML = viewSchrank();
+  else if (currentView === 'heute') main.innerHTML = viewHeute();
+  else if (currentView === 'anliegen') main.innerHTML = viewAnliegen();
+  else if (currentView === 'lexikon') main.innerHTML = viewLexikon();
+  else if (currentView === 'verlauf') main.innerHTML = viewVerlauf();
+  attachViewListeners();
+}
+
+/* ---------------- Schrank ---------------- */
+function ingredientChipsHtml(selectedKeys) {
+  return INGREDIENT_KEYS.map(key => {
+    const checked = selectedKeys.includes(key);
+    return `<label class="chip-check${checked?' checked':''}" data-ing-key="${key}">
+      <input type="checkbox" value="${key}" ${checked?'checked':''}>${INGREDIENTS[key].name}
+    </label>`;
+  }).join('');
+}
+
+function viewSchrank() {
+  const active = activeProducts();
+  const byCat = {};
+  active.forEach(p => { if (!byCat[p.category]) byCat[p.category] = []; byCat[p.category].push(p); });
+
+  let listHtml = '';
+  if (active.length === 0) {
+    listHtml = '<p class="empty-note">Noch keine Produkte im Schrank. Trag dein erstes Produkt oben ein.</p>';
+  } else {
+    CATEGORIES.forEach(cat => {
+      if (!byCat[cat.key]) return;
+      listHtml += `<p class="group-heading">${cat.label}</p>`;
+      byCat[cat.key].forEach(p => {
+        const knownTags = productIngredientKeys(p).map(k => `<span class="tag">${INGREDIENTS[k].name}</span>`).join('');
+        const customTags = (p.customIngredients||[]).map(c => `<span class="tag unknown">${escapeHtml(c)}</span>`).join('');
+        listHtml += `<div class="product-row">
+          <div>
+            <span class="product-name">${escapeHtml(p.name)}</span>
+            <div class="tag-row">${knownTags}${customTags || (!knownTags ? '<span class="tag unknown">keine Wirkstoffe hinterlegt</span>' : '')}</div>
+          </div>
+          <button class="btn-danger-text" data-action="finish-product" data-id="${p.id}">Leer — entfernen</button>
+        </div>`;
+      });
+    });
+  }
+
+  return `
+    <h1 class="page-title">Schrank</h1>
+    <p class="page-sub">Alle Produkte, die du gerade aktiv benutzt. Ist etwas leer, entfern es hier — es wandert in den Verlauf.</p>
+    <svg class="underline-svg" viewBox="0 0 150 9" xmlns="http://www.w3.org/2000/svg"><path d="M2 5 C 24 2, 40 8, 64 4 S 104 2, 148 5" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+
+    <div class="card">
+      <h3>Neues Produkt hinzufügen</h3>
+      <label class="field-label">Produktname</label>
+      <input type="text" id="new-product-name" placeholder="z. B. CeraVe Feuchtigkeitscreme">
+      <label class="field-label">Kategorie</label>
+      <select id="new-product-category">
+        ${CATEGORIES.map(c => `<option value="${c.key}">${c.label}</option>`).join('')}
+      </select>
+      <label class="field-label">Bekannte Wirkstoffe (Mehrfachauswahl möglich)</label>
+      <div class="checkbox-grid" id="ingredient-chip-grid">${ingredientChipsHtml([])}</div>
+      <label class="field-label">Weitere Wirkstoffe (nicht in der Liste, kommagetrennt)</label>
+      <input type="text" id="new-product-custom" placeholder="z. B. Aloe Vera, Grüntee-Extrakt">
+      <div class="toolbar" style="margin-top:16px;">
+        <button class="btn" id="add-product-btn">Produkt speichern</button>
+        <span class="status" id="add-product-status"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Aktive Produkte (${active.length})</h3>
+      ${listHtml}
+    </div>
+  `;
+}
+
+/* ---------------- Heute ---------------- */
+function routineOrderSort(a, b) {
+  const pa = products[a], pb = products[b];
+  const catDiff = categoryOrder(pa.category) - categoryOrder(pb.category);
+  if (catDiff !== 0) return catDiff;
+  const wa = Math.max(0, ...productIngredientKeys(pa).map(ingredientWeight), 0);
+  const wb = Math.max(0, ...productIngredientKeys(pb).map(ingredientWeight), 0);
+  return wa - wb;
+}
+
+function productChecklistHtml(timeKey, selectedIds) {
+  const active = activeProducts();
+  if (active.length === 0) return '<p class="empty-note">Noch keine Produkte im Schrank hinterlegt.</p>';
+  return `<div class="checkbox-grid">${active.map(p => {
+    const checked = selectedIds.includes(p.id);
+    return `<label class="chip-check${checked?' checked':''}" data-time="${timeKey}">
+      <input type="checkbox" value="${p.id}" ${checked?'checked':''}>${escapeHtml(p.name)}
+    </label>`;
+  }).join('')}</div>`;
+}
+
+function conflictWarningsForSelection(ids) {
+  const keysUsed = [];
+  ids.forEach(id => { if (products[id]) productIngredientKeys(products[id]).forEach(k => keysUsed.push(k)); });
+  const warnings = [];
+  const seen = new Set();
+  keysUsed.forEach(k => {
+    (INGREDIENTS[k].conflicts || []).forEach(otherKey => {
+      if (keysUsed.includes(otherKey)) {
+        const pairKey = [k, otherKey].sort().join('+');
+        if (!seen.has(pairKey)) {
+          seen.add(pairKey);
+          warnings.push(`${INGREDIENTS[k].name} und ${INGREDIENTS[otherKey].name} vertragen sich in derselben Routine meist nicht gut — besser abwechselnd an unterschiedlichen Tagen/Zeiten verwenden.`);
+        }
+      }
+    });
+  });
+  return warnings;
+}
+
+function recommendationText() {
+  const todayLog = logs[todayISO()] || { morning: [], evening: [] };
+  const amKeys = new Set(); todayLog.morning.forEach(id => { if (products[id]) productIngredientKeys(products[id]).forEach(k => amKeys.add(k)); });
+  const pmKeys = new Set(); todayLog.evening.forEach(id => { if (products[id]) productIngredientKeys(products[id]).forEach(k => pmKeys.add(k)); });
+
+  const notes = [];
+  if (todayLog.morning.length && !amKeys.has('spf')) {
+    notes.push('Für heute Morgen ist kein Sonnenschutz eingetragen — falls du rausgehst, nicht vergessen, das ist der wichtigste Schritt gegen Falten und Flecken.');
+  }
+  if (amKeys.has('vitamin-c') || amKeys.has('aha') || amKeys.has('bha') || amKeys.has('retinol')) {
+    notes.push('Heute Morgen war ein aktiver Wirkstoff dabei — heute Abend eher auf sanfte, feuchtigkeitsspendende Pflege setzen (z. B. Hyaluronsäure, Ceramide, Panthenol) statt starker Säuren oder Retinol.');
+  }
+  if (pmKeys.has('retinol')) {
+    notes.push('Nach Retinol heute Abend: morgen unbedingt Sonnenschutz verwenden, die Haut ist danach empfindlicher gegenüber UV-Licht. Für die nächsten 1–2 Abende lieber auf Säuren (AHA/BHA) verzichten und der Haut Zeit zur Regeneration geben.');
+  }
+  if (pmKeys.has('aha') || pmKeys.has('bha')) {
+    notes.push('Nach dem heutigen Peeling-Wirkstoff: die nächsten Tage eher beruhigend pflegen (Panthenol, Centella) und morgen Sonnenschutz nicht vergessen.');
+  }
+  if (!notes.length && (todayLog.morning.length || todayLog.evening.length)) {
+    notes.push('Sieht ausgeglichen aus — für morgen einfach im gewohnten Rhythmus weitermachen.');
+  }
+  return notes;
+}
+
+function viewHeute() {
+  const iso = todayISO();
+  const todayLog = logs[iso] || { morning: [], evening: [] };
+  const amWarnings = conflictWarningsForSelection(todayLog.morning);
+  const pmWarnings = conflictWarningsForSelection(todayLog.evening);
+  const recs = recommendationText();
+
+  const amSorted = [...todayLog.morning].sort(routineOrderSort);
+  const pmSorted = [...todayLog.evening].sort(routineOrderSort);
+
+  return `
+    <h1 class="page-title">Heute</h1>
+    <p class="page-sub">${formatDateShort(iso)} — trag ein, was du morgens und abends verwendet hast.</p>
+    <svg class="underline-svg" viewBox="0 0 150 9" xmlns="http://www.w3.org/2000/svg"><path d="M2 5 C 24 2, 40 8, 64 4 S 104 2, 148 5" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+
+    <div class="card">
+      <h3>☀️ Morgens</h3>
+      ${productChecklistHtml('morning', todayLog.morning)}
+      ${amWarnings.map(w => `<div class="warning-box">⚠️ ${w}</div>`).join('')}
+      <div class="toolbar" style="margin-top:14px;">
+        <button class="btn" data-action="save-log" data-time="morning">Morgen-Routine speichern</button>
+        <span class="status" id="status-morning"></span>
+      </div>
+      ${amSorted.length ? `<p class="empty-note">Reihenfolge-Vorschlag: ${amSorted.map(id => escapeHtml(products[id]?.name || '?')).join(' → ')}</p>` : ''}
+    </div>
+
+    <div class="card">
+      <h3>🌙 Abends</h3>
+      ${productChecklistHtml('evening', todayLog.evening)}
+      ${pmWarnings.map(w => `<div class="warning-box">⚠️ ${w}</div>`).join('')}
+      <div class="toolbar" style="margin-top:14px;">
+        <button class="btn" data-action="save-log" data-time="evening">Abend-Routine speichern</button>
+        <span class="status" id="status-evening"></span>
+      </div>
+      ${pmSorted.length ? `<p class="empty-note">Reihenfolge-Vorschlag: ${pmSorted.map(id => escapeHtml(products[id]?.name || '?')).join(' → ')}</p>` : ''}
+    </div>
+
+    ${recs.length ? `<div class="card"><h3>Empfehlung für heute Abend / die nächsten Tage</h3>${recs.map(r => `<p style="font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:6px 0;">💡 ${r}</p>`).join('')}</div>` : ''}
+  `;
+}
+
+/* ---------------- Anliegen ---------------- */
+function buildPlan(concernKey) {
+  const active = activeProducts();
+  const relevant = active.filter(p => productIngredientKeys(p).some(k => INGREDIENTS[k].concerns.includes(concernKey)));
+  const amSteps = relevant.filter(p => productIngredientKeys(p).some(k => INGREDIENTS[k].concerns.includes(concernKey) && INGREDIENTS[k].time !== 'evening'));
+  const pmSteps = relevant.filter(p => productIngredientKeys(p).some(k => INGREDIENTS[k].concerns.includes(concernKey) && INGREDIENTS[k].time !== 'morning'));
+  amSteps.sort(routineOrderSortByProduct); pmSteps.sort(routineOrderSortByProduct);
+
+  const ownedKeysForConcern = new Set();
+  relevant.forEach(p => productIngredientKeys(p).forEach(k => { if (INGREDIENTS[k].concerns.includes(concernKey)) ownedKeysForConcern.add(k); }));
+
+  const allKeysForConcern = INGREDIENT_KEYS.filter(k => INGREDIENTS[k].concerns.includes(concernKey));
+  const missing = allKeysForConcern.filter(k => !ownedKeysForConcern.has(k));
+
+  return { amSteps, pmSteps, missing };
+}
+function routineOrderSortByProduct(a, b) {
+  const catDiff = categoryOrder(a.category) - categoryOrder(b.category);
+  if (catDiff !== 0) return catDiff;
+  const wa = Math.max(0, ...productIngredientKeys(a).map(ingredientWeight), 0);
+  const wb = Math.max(0, ...productIngredientKeys(b).map(ingredientWeight), 0);
+  return wa - wb;
+}
+
+function stepListHtml(list, concernKey) {
+  if (!list.length) return '<p class="empty-note">Kein passendes Produkt aus deinem Schrank für diese Zeit gefunden.</p>';
+  return list.map((p, i) => {
+    const matchingKeys = productIngredientKeys(p).filter(k => INGREDIENTS[k].concerns.includes(concernKey));
+    const why = matchingKeys.map(k => INGREDIENTS[k].name).join(', ');
+    return `<div class="plan-step">
+      <span class="plan-step-num">${i+1}.</span>
+      <span class="plan-step-body"><b>${escapeHtml(p.name)}</b> <span class="product-cat">${categoryLabel(p.category)}</span>
+        ${why ? `<span class="why">wegen: ${why}</span>` : ''}
+      </span>
+    </div>`;
+  }).join('');
+}
+
+function viewAnliegen() {
+  const plan = buildPlan(selectedConcern);
+  return `
+    <h1 class="page-title">Hautanliegen</h1>
+    <p class="page-sub">Wähl aus, was dich gerade beschäftigt — das Tool baut dir aus deinem vorhandenen Schrank einen Pflegeplan.</p>
+    <svg class="underline-svg" viewBox="0 0 150 9" xmlns="http://www.w3.org/2000/svg"><path d="M2 5 C 24 2, 40 8, 64 4 S 104 2, 148 5" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+
+    <div class="card">
+      <div class="concern-select-row">
+        <select id="concern-select">
+          ${CONCERNS.map(c => `<option value="${c.key}" ${c.key===selectedConcern?'selected':''}>${c.label}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="plan-block">
+        <h3>☀️ Morgens</h3>
+        ${stepListHtml(plan.amSteps, selectedConcern)}
+      </div>
+      <div class="plan-block">
+        <h3>🌙 Abends</h3>
+        ${stepListHtml(plan.pmSteps, selectedConcern)}
+      </div>
+
+      ${plan.missing.length ? `<div class="missing-box">
+        <h4>Fehlt in deinem Schrank</h4>
+        <p>Für "${CONCERNS.find(c=>c.key===selectedConcern).label}" helfen außerdem diese Wirkstoffe, die du aktuell nicht im Schrank hast: ${plan.missing.map(k => INGREDIENTS[k].name).join(', ')}. Beim nächsten Kauf gezielt danach Ausschau halten.</p>
+      </div>` : `<div class="missing-box"><h4>Gut abgedeckt</h4><p>Für dieses Anliegen hast du die wichtigsten Wirkstoff-Kategorien bereits im Schrank.</p></div>`}
+    </div>
+  `;
+}
+
+/* ---------------- Lexikon ---------------- */
+function viewLexikon() {
+  const filtered = INGREDIENT_KEYS.filter(k => {
+    if (!lexFilter) return true;
+    const q = lexFilter.toLowerCase();
+    return INGREDIENTS[k].name.toLowerCase().includes(q) || INGREDIENTS[k].purpose.toLowerCase().includes(q);
+  });
+  const timeLabel = { morning: 'morgens', evening: 'abends', both: 'morgens & abends' };
+
+  return `
+    <h1 class="page-title">Wirkstoff-Lexikon</h1>
+    <p class="page-sub">Wofür Wirkstoffe gut sind, wann man sie einsetzt und was Toner, Serum & Co. eigentlich unterscheidet.</p>
+    <svg class="underline-svg" viewBox="0 0 150 9" xmlns="http://www.w3.org/2000/svg"><path d="M2 5 C 24 2, 40 8, 64 4 S 104 2, 148 5" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+
+    <div class="card">
+      <h3>Produktarten & Reihenfolge</h3>
+      <p style="font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink-soft); line-height:1.7;">
+        Grundregel: von <b>flüssig zu fest</b> auftragen, damit jede Schicht einziehen kann, bevor die nächste kommt.<br><br>
+        <b>Reinigung</b> — entfernt Schmutz, Talg und Make-up, ist die Basis jeder Routine.<br>
+        <b>Toner</b> — flüssig, bereitet die Haut vor und kann zusätzliche Wirkstoffe liefern.<br>
+        <b>Serum</b> — konzentrierte Wirkstoffe, gezielt gegen ein bestimmtes Anliegen.<br>
+        <b>Augencreme</b> — für die empfindliche, dünnere Haut um die Augen.<br>
+        <b>Creme</b> — versiegelt und spendet Feuchtigkeit, meist letzter Pflegeschritt abends.<br>
+        <b>Gesichtsöl</b> — optional, ganz am Ende, wenn zusätzliche Pflege nötig ist.<br>
+        <b>Sonnenschutz</b> — morgens immer als allerletzter Schritt.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Eigenen Wirkstoff hinzufügen</h3>
+      <label class="field-label">Name</label>
+      <input type="text" id="new-ing-name" placeholder="z. B. Bakuchiol">
+      <label class="field-label">Wirkung / Wofür gut</label>
+      <textarea id="new-ing-purpose" rows="2" placeholder="Kurz beschreiben, wofür der Wirkstoff verwendet wird"></textarea>
+      <label class="field-label">Passt zu welchem Hautanliegen (Mehrfachauswahl)</label>
+      <div class="checkbox-grid" id="new-ing-concern-grid">
+        ${CONCERNS.map(c => `<label class="chip-check" data-concern-key="${c.key}"><input type="checkbox" value="${c.key}">${c.label}</label>`).join('')}
+      </div>
+      <label class="field-label">Wann anwenden</label>
+      <select id="new-ing-time">
+        <option value="both">morgens & abends</option>
+        <option value="morning">morgens</option>
+        <option value="evening">abends</option>
+      </select>
+      <div class="toolbar" style="margin-top:16px;">
+        <button class="btn" id="add-ingredient-btn">Wirkstoff speichern</button>
+        <span class="status" id="add-ingredient-status"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <input type="text" class="lex-search" id="lex-search" placeholder="Wirkstoff suchen …" value="${escapeHtml(lexFilter)}">
+      ${filtered.map(k => {
+        const ing = INGREDIENTS[k];
+        return `<div class="lex-item">
+          <span class="lex-name">${escapeHtml(ing.name)}</span><span class="lex-time">${timeLabel[ing.time]}</span>
+          ${ing.custom ? `<button class="btn-danger-text" style="float:right;" data-action="delete-ingredient" data-key="${k}">Löschen</button>` : ''}
+          <p class="lex-purpose">${escapeHtml(ing.purpose)}</p>
+          <div class="tag-row">${ing.concerns.map(c => `<span class="tag">${CONCERNS.find(cc=>cc.key===c)?.label || c}</span>`).join('')}${ing.custom ? '<span class="tag unknown">eigener Eintrag</span>' : ''}</div>
+        </div>`;
+      }).join('') || '<p class="empty-note">Keine Treffer.</p>'}
+    </div>
+  `;
+}
+
+/* ---------------- Verlauf ---------------- */
+let calendarYear = new Date().getFullYear();
+let calendarMonth = new Date().getMonth(); // 0-indexed
+let selectedCalendarDay = todayISO();
+
+const MONTH_NAMES_FULL = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WEEKDAY_LETTERS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+function buildCalendarWeeks(year, month) {
+  const first = new Date(year, month, 1);
+  const startOffset = (first.getDay() + 6) % 7; // Monday = 0
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push(year + '-' + pad(month + 1) + '-' + pad(d));
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+function renderCalendar() {
+  const weeks = buildCalendarWeeks(calendarYear, calendarMonth);
+  const iso = todayISO();
+  const rows = weeks.map(week => `<tr>${week.map(day => {
+    if (!day) return '<td></td>';
+    const hasLog = logs[day] && (logs[day].morning?.length || logs[day].evening?.length);
+    const isToday = day === iso;
+    const isSelected = day === selectedCalendarDay;
+    const classes = ['cal-day'];
+    if (hasLog) classes.push('has-log');
+    if (isToday) classes.push('is-today');
+    if (isSelected) classes.push('is-selected');
+    const dayNum = Number(day.split('-')[2]);
+    return `<td><button type="button" class="${classes.join(' ')}" data-day="${day}">${dayNum}</button></td>`;
+  }).join('')}</tr>`).join('');
+
+  return `
+    <div class="cal-nav">
+      <button class="btn-ghost btn-sm" id="cal-prev" type="button">← Vorheriger</button>
+      <span class="cal-month-label">${MONTH_NAMES_FULL[calendarMonth]} ${calendarYear}</span>
+      <button class="btn-ghost btn-sm" id="cal-next" type="button">Nächster →</button>
+    </div>
+    <table class="cal-table">
+      <thead><tr>${WEEKDAY_LETTERS.map(w => `<th>${w}</th>`).join('')}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${renderSelectedDayDetail()}
+  `;
+}
+
+function renderSelectedDayDetail() {
+  const l = logs[selectedCalendarDay];
+  const amNames = l ? (l.morning||[]).map(id => products[id]?.name || '(gelöschtes Produkt)') : [];
+  const pmNames = l ? (l.evening||[]).map(id => products[id]?.name || '(gelöschtes Produkt)') : [];
+  if (!amNames.length && !pmNames.length) {
+    return `<div class="log-day"><p class="log-day-date">${formatDateShort(selectedCalendarDay)}</p><p class="empty-note">Keine Einträge an diesem Tag.</p></div>`;
+  }
+  return `<div class="log-day">
+    <p class="log-day-date">${formatDateShort(selectedCalendarDay)}</p>
+    ${amNames.length ? `<p class="log-time-row"><b>Morgens:</b> ${escapeHtml(amNames.join(', '))}</p>` : ''}
+    ${pmNames.length ? `<p class="log-time-row"><b>Abends:</b> ${escapeHtml(pmNames.join(', '))}</p>` : ''}
+  </div>`;
+}
+
+function computeUsageStats() {
+  const productCounts = {};
+  const ingredientCounts = {};
+  Object.values(logs).forEach(l => {
+    [...(l.morning||[]), ...(l.evening||[])].forEach(id => {
+      const p = products[id];
+      const name = p ? p.name : null;
+      if (!name) return;
+      productCounts[name] = (productCounts[name] || 0) + 1;
+      productIngredientKeys(p).forEach(k => {
+        const label = INGREDIENTS[k] ? INGREDIENTS[k].name : k;
+        ingredientCounts[label] = (ingredientCounts[label] || 0) + 1;
+      });
+    });
+  });
+  const toSortedArray = obj => Object.entries(obj).sort((a,b) => b[1]-a[1]).slice(0, 8);
+  return { productStats: toSortedArray(productCounts), ingredientStats: toSortedArray(ingredientCounts) };
+}
+
+function barChartHtml(entries) {
+  if (!entries.length) return '<p class="empty-note">Noch keine Daten — trag ein paar Tage im Bereich "Heute" ein.</p>';
+  const max = Math.max(...entries.map(e => e[1]));
+  return `<div class="bar-chart">${entries.map(([label, count]) => `
+    <div class="bar-row">
+      <span class="bar-label">${escapeHtml(label)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(6, (count/max)*100)}%"></div></div>
+      <span class="bar-count">${count}×</span>
+    </div>`).join('')}</div>`;
+}
+
+function viewVerlauf() {
+  const finished = finishedProducts();
+  const { productStats, ingredientStats } = computeUsageStats();
+
+  let finishedHtml = '<p class="empty-note">Noch keine aufgebrauchten Produkte.</p>';
+  if (finished.length) {
+    finishedHtml = finished.map(p => `<div class="finished-row"><span>${escapeHtml(p.name)}</span><span>${p.finishedAt ? new Date(p.finishedAt).toLocaleDateString('de-DE') : ''}</span></div>`).join('');
+  }
+
+  return `
+    <h1 class="page-title">Verlauf</h1>
+    <p class="page-sub">Kalender, Statistiken und aufgebrauchte Produkte.</p>
+    <svg class="underline-svg" viewBox="0 0 150 9" xmlns="http://www.w3.org/2000/svg"><path d="M2 5 C 24 2, 40 8, 64 4 S 104 2, 148 5" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+
+    <div class="card"><h3>Kalender</h3>${renderCalendar()}</div>
+
+    <div class="card">
+      <h3>Meistgenutzte Produkte</h3>
+      ${barChartHtml(productStats)}
+    </div>
+    <div class="card">
+      <h3>Meistgenutzte Wirkstoffe</h3>
+      ${barChartHtml(ingredientStats)}
+    </div>
+
+    <div class="card"><h3>Aufgebrauchte Produkte</h3>${finishedHtml}</div>
+    <p class="info-banner">Hinweis: Dieses Tool gibt allgemeine, wirkstoffbasierte Empfehlungen und ersetzt keine dermatologische Beratung. Bei anhaltenden oder starken Hautproblemen sprich zusätzlich mit einer Hautärztin oder einem Hautarzt.</p>
+  `;
+}
+
+
+/* ---------------- Listeners ---------------- */
+function attachViewListeners() {
+  const main = document.getElementById('main-content');
+
+  // ingredient chips (add-product form)
+  main.querySelectorAll('#ingredient-chip-grid .chip-check').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const key = chip.getAttribute('data-ing-key');
+      const idx = pendingIngredientSelection.indexOf(key);
+      if (idx >= 0) pendingIngredientSelection.splice(idx, 1); else pendingIngredientSelection.push(key);
+      chip.classList.toggle('checked');
+      chip.querySelector('input').checked = pendingIngredientSelection.includes(key);
+    });
+  });
+
+  const addBtn = document.getElementById('add-product-btn');
+  if (addBtn) addBtn.addEventListener('click', addProduct);
+
+  main.querySelectorAll('[data-action="finish-product"]').forEach(btn => {
+    btn.addEventListener('click', () => finishProduct(btn.getAttribute('data-id')));
+  });
+
+  // heute checkboxes
+  main.querySelectorAll('.chip-check[data-time]').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const cb = chip.querySelector('input');
+      cb.checked = !cb.checked;
+      chip.classList.toggle('checked', cb.checked);
+    });
+  });
+  main.querySelectorAll('[data-action="save-log"]').forEach(btn => {
+    btn.addEventListener('click', () => saveLog(btn.getAttribute('data-time')));
+  });
+
+  const concernSelect = document.getElementById('concern-select');
+  if (concernSelect) concernSelect.addEventListener('change', () => { selectedConcern = concernSelect.value; renderMain(); });
+
+  const lexSearch = document.getElementById('lex-search');
+  if (lexSearch) lexSearch.addEventListener('input', () => { lexFilter = lexSearch.value; renderMain(); document.getElementById('lex-search').focus(); document.getElementById('lex-search').selectionStart = document.getElementById('lex-search').value.length; });
+
+  // eigenen Wirkstoff hinzufügen
+  main.querySelectorAll('#new-ing-concern-grid .chip-check').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const key = chip.getAttribute('data-concern-key');
+      const idx = pendingNewIngredientConcerns.indexOf(key);
+      if (idx >= 0) pendingNewIngredientConcerns.splice(idx, 1); else pendingNewIngredientConcerns.push(key);
+      chip.classList.toggle('checked');
+      chip.querySelector('input').checked = pendingNewIngredientConcerns.includes(key);
+    });
+  });
+  const addIngBtn = document.getElementById('add-ingredient-btn');
+  if (addIngBtn) addIngBtn.addEventListener('click', addCustomIngredient);
+
+  main.querySelectorAll('[data-action="delete-ingredient"]').forEach(btn => {
+    btn.addEventListener('click', () => deleteCustomIngredient(btn.getAttribute('data-key')));
+  });
+
+  // Kalender
+  const calPrev = document.getElementById('cal-prev');
+  const calNext = document.getElementById('cal-next');
+  if (calPrev) calPrev.addEventListener('click', () => {
+    calendarMonth--; if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+    renderMain();
+  });
+  if (calNext) calNext.addEventListener('click', () => {
+    calendarMonth++; if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+    renderMain();
+  });
+  main.querySelectorAll('.cal-day').forEach(btn => {
+    btn.addEventListener('click', () => { selectedCalendarDay = btn.getAttribute('data-day'); renderMain(); });
+  });
+}
+
+async function addProduct() {
+  const nameInput = document.getElementById('new-product-name');
+  const catSelect = document.getElementById('new-product-category');
+  const customInput = document.getElementById('new-product-custom');
+  const status = document.getElementById('add-product-status');
+  const name = nameInput.value.trim();
+  if (!name) { status.textContent = 'Bitte einen Produktnamen eintragen.'; status.className = 'status error'; return; }
+
+  const custom = customInput.value.split(',').map(s => s.trim()).filter(Boolean);
+  const id = genId();
+  products[id] = {
+    id, name, category: catSelect.value,
+    ingredients: [...pendingIngredientSelection],
+    customIngredients: custom,
+    status: 'active', addedAt: new Date().toISOString(), finishedAt: null
+  };
+
+  status.textContent = 'Speichere …'; status.className = 'status';
+  try {
+    await persistData();
+    pendingIngredientSelection = [];
+    renderMain();
+  } catch (err) {
+    delete products[id];
+    status.textContent = 'Speichern fehlgeschlagen. Bitte erneut versuchen.';
+    status.className = 'status error';
+  }
+}
+
+async function finishProduct(id) {
+  if (!confirm('Produkt als leer markieren und aus dem Schrank entfernen?')) return;
+  const backup = { ...products[id] };
+  products[id].status = 'finished';
+  products[id].finishedAt = new Date().toISOString();
+  try {
+    await persistData();
+    renderMain();
+  } catch (err) {
+    products[id] = backup;
+    alert('Das hat nicht geklappt. Bitte erneut versuchen.');
+    renderMain();
+  }
+}
+
+async function saveLog(timeKey) {
+  const main = document.getElementById('main-content');
+  const checked = Array.from(main.querySelectorAll(`.chip-check[data-time="${timeKey}"] input:checked`)).map(cb => cb.value);
+  const iso = todayISO();
+  const backup = logs[iso] ? { ...logs[iso] } : null;
+  if (!logs[iso]) logs[iso] = { morning: [], evening: [] };
+  logs[iso][timeKey] = checked;
+
+  const status = document.getElementById('status-' + timeKey);
+  status.textContent = 'Speichere …'; status.className = 'status';
+  try {
+    await persistData();
+    status.textContent = 'Gespeichert';
+    status.className = 'status saved';
+    renderMain();
+  } catch (err) {
+    if (backup) logs[iso] = backup; else delete logs[iso];
+    status.textContent = 'Speichern fehlgeschlagen.';
+    status.className = 'status error';
+  }
+}
+
+async function addCustomIngredient() {
+  const nameInput = document.getElementById('new-ing-name');
+  const purposeInput = document.getElementById('new-ing-purpose');
+  const timeSelect = document.getElementById('new-ing-time');
+  const status = document.getElementById('add-ingredient-status');
+  const name = nameInput.value.trim();
+  const purpose = purposeInput.value.trim();
+  if (!name || !purpose) { status.textContent = 'Bitte Name und Wirkung ausfüllen.'; status.className = 'status error'; return; }
+  if (!pendingNewIngredientConcerns.length) { status.textContent = 'Bitte mindestens ein Hautanliegen auswählen.'; status.className = 'status error'; return; }
+
+  const key = slugify(name);
+  const entry = { name, purpose, concerns: [...pendingNewIngredientConcerns], time: timeSelect.value, weight: 3, conflicts: [], custom: true };
+  INGREDIENTS[key] = entry;
+  INGREDIENT_KEYS = Object.keys(INGREDIENTS);
+  customLexicon[key] = entry;
+
+  status.textContent = 'Speichere …'; status.className = 'status';
+  try {
+    await persistData();
+    pendingNewIngredientConcerns = [];
+    renderMain();
+  } catch (err) {
+    delete INGREDIENTS[key]; delete customLexicon[key];
+    INGREDIENT_KEYS = Object.keys(INGREDIENTS);
+    status.textContent = 'Speichern fehlgeschlagen. Bitte erneut versuchen.';
+    status.className = 'status error';
+  }
+}
+
+async function deleteCustomIngredient(key) {
+  if (!confirm('Diesen selbst hinzugefügten Wirkstoff wieder löschen?')) return;
+  const backup = INGREDIENTS[key];
+  delete INGREDIENTS[key];
+  delete customLexicon[key];
+  INGREDIENT_KEYS = Object.keys(INGREDIENTS);
+  try {
+    await persistData();
+    renderMain();
+  } catch (err) {
+    INGREDIENTS[key] = backup;
+    customLexicon[key] = backup;
+    INGREDIENT_KEYS = Object.keys(INGREDIENTS);
+    alert('Löschen fehlgeschlagen. Bitte erneut versuchen.');
+    renderMain();
+  }
+}
+
+/* ---------------- Init ---------------- */
+function init() {
+  if (CONFIG_IS_PLACEHOLDER) { renderLogin(); return; }
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (user) {
+      currentUser = user;
+      renderShell();
+      try {
+        await loadData();
+        renderMain();
+      } catch (err) {
+        document.getElementById('main-content').innerHTML = `
+          <div class="loading-state">
+            Deine Daten konnten nicht geladen werden (${escapeHtml(err.message || 'unbekannter Fehler')}).<br><br>
+            Das passiert z. B. wenn ein Ad-Blocker Anfragen an Google blockiert, oder wenn die Firestore-Regeln
+            die "skincare"-Sammlung noch nicht erlauben.<br><br>
+            <button class="btn" id="retry-btn">Erneut versuchen</button>
+          </div>`;
+        document.getElementById('retry-btn').addEventListener('click', () => location.reload());
+      }
+    } else {
+      currentUser = null;
+      renderLogin();
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
